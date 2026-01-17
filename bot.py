@@ -1,11 +1,10 @@
 import os
-import asyncio
-import nest_asyncio
+import nest_asyncio, asyncio
 from telethon import TelegramClient
 
 nest_asyncio.apply()
 
-# Variables chargées depuis Render (Environment Variables)
+# Identifiants API chargés depuis Render (Environment Variables)
 api_id = int(os.getenv("API_ID"))
 api_hash = os.getenv("API_HASH")
 phone = os.getenv("PHONE")
@@ -43,7 +42,7 @@ def format_vip_message(text):
         elif "Possession" in line:
             stats.append(f"Possession: **{line.split(':')[1].strip()}**")
         elif any(x in line for x in ["Buts", "Corners", "Tirs cadrés", "Tirs non cadrés"]):
-            if "Tirs au but" not in line:
+            if "Tirs au but" not in line:  # supprimer tirs au but
                 parts = line.split(":")
                 if len(parts) == 2:
                     label, value = parts
@@ -69,16 +68,19 @@ def format_vip_message(text):
     msg += "\n💡 *Conseil VIP* : Misez toujours entre **7 à 10%** de votre capital."
     return msg
 
-
 async def main():
     await client.start(phone)
-    print("✅ Bot connecté")
+    print("✅ Connecté")
+
+    # Message de test au démarrage
+    await client.send_message(target_channel, "✅ Bot démarré et connecté avec succès !")
+    print("✅ Message de test envoyé")
 
     betmines_entity = await client.get_entity("@BetMines_live_bot")
     last_id = None
 
     while True:
-        # Récupère les derniers messages
+        # Vérifie les derniers messages toutes les 20 secondes
         messages = await client.get_messages(betmines_entity, limit=1)
         if messages:
             msg = messages[0]
@@ -88,11 +90,8 @@ async def main():
                 print("✅ Nouveau message VIP envoyé")
                 last_id = msg.id
 
-        # Attendre 20 secondes avant de re-checker
         await asyncio.sleep(20)
-
 
 if __name__ == "__main__":
     with client:
         client.loop.run_until_complete(main())
-
